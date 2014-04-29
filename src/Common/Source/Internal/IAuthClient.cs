@@ -17,8 +17,9 @@
 #if NETFX_CORE
         /// <summary>
         /// Performs authentication flow using platform specific technology.
+        /// If silent is null, credential prompt is done on a as-needed basis. If it is true - prompt is never shown. If false, prompt is always shown.
         /// </summary>
-        Task<LiveLoginResult> AuthenticateAsync(string scopes, bool silent);
+        Task<LiveLoginResult> AuthenticateAsync(string scopes, bool? silent);
 #else
         /// <summary>
         /// Performs authentication flow using platform specific technology.

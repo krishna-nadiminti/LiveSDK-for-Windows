@@ -122,14 +122,16 @@
         /// Displays the login/consent UI and returns a Session object when user completes the auth flow.
         /// </summary>
         /// <param name="scopes">The list of offers that the application is requesting user consent for.</param>
-        public Task<LiveLoginResult> LoginAsync(IEnumerable<string> scopes)
+        /// <param name="alwaysShowCredentialPrompt">If true, always asks the user for credentials. Otherwise, the user is only asked for credentials if not using single sign-on</param>
+        public Task<LiveLoginResult> LoginAsync(IEnumerable<string> scopes, bool alwaysShowCredentialPrompt = false)
         {
             if (scopes == null && this.scopes == null)
             {
                 throw new ArgumentNullException("scopes");
             }
-            
-            return this.ExecuteAuthTaskAsync(scopes, false);
+
+            bool? silent = alwaysShowCredentialPrompt ? false : default(bool?);
+            return this.ExecuteAuthTaskAsync(scopes, silent);
         }
 
         /// <summary>
@@ -214,14 +216,14 @@
             return true;
         }
 
-        private async Task<LiveLoginResult> ExecuteAuthTaskAsync(IEnumerable<string> scopes, bool silent)
+        private async Task<LiveLoginResult> ExecuteAuthTaskAsync(IEnumerable<string> scopes, bool? silent)
         {
             if (scopes != null)
             {
                 this.scopes = new List<string>(scopes);
             }
 
-            this.EnsureSignInScope();
+            //this.EnsureSignInScope();
             this.PrepareForAsync();
 
             LiveLoginResult result = await this.AuthClient.AuthenticateAsync(
@@ -275,15 +277,15 @@
             }
         }
 
-        private void EnsureSignInScope()
-        {
-            Debug.Assert(this.scopes != null);
+        //private void EnsureSignInScope()
+        //{
+        //    Debug.Assert(this.scopes != null);
 
-            if (string.IsNullOrEmpty(this.scopes.Find(s => string.CompareOrdinal(s, LiveAuthClient.SignInOfferName) == 0)))
-            {
-                this.scopes.Insert(0, LiveAuthClient.SignInOfferName);
-            }
-        }
+        //    if (string.IsNullOrEmpty(this.scopes.Find(s => string.CompareOrdinal(s, LiveAuthClient.SignInOfferName) == 0)))
+        //    {
+        //        this.scopes.Insert(0, LiveAuthClient.SignInOfferName);
+        //    }
+        //}
 
         private string GetAppPackageSid()
         {

@@ -50,7 +50,7 @@
         /// <summary>
         /// Authenticate the user.  Ask user for consent if neccessary.
         /// </summary>
-        public async Task<LiveLoginResult> AuthenticateAsync(string scopes, bool silent)
+        public async Task<LiveLoginResult> AuthenticateAsync(string scopes, bool? silent)
         {
             Exception error = null;
             string accessToken = null;
@@ -132,12 +132,13 @@
             await this.authenticator.SignOutUserAsync();
         }
 
-        private async Task<string> GetAccessToken(string scopes, bool silent)
+        private async Task<string> GetAccessToken(string scopes, bool? silent)
         {
             string ticket = string.Empty;
             Debug.Assert(!string.IsNullOrEmpty(scopes), "scopes is null or empty.");
 
-            CredentialPromptType promptType = silent ? CredentialPromptType.DoNotPrompt : CredentialPromptType.PromptIfNeeded;
+            var promptType = GetCredentialPromptType(silent);
+
             var ticketRequests = new List<OnlineIdServiceTicketRequest>();
             ticketRequests.Add(new OnlineIdServiceTicketRequest(scopes, "DELEGATION"));
 
@@ -150,7 +151,21 @@
             return ticket;
         }
 
-        private async Task<string> GetAuthenticationToken(string redirectDomain, bool silent)
+        private static CredentialPromptType GetCredentialPromptType(bool? silent)
+        {
+            var promptType = CredentialPromptType.PromptIfNeeded; //default: when silent = null
+            if (silent == true)
+            {
+                promptType = CredentialPromptType.DoNotPrompt;
+            }
+            else if (silent == false)
+            {
+                promptType = CredentialPromptType.RetypeCredentials;
+            }
+            return promptType;
+        }
+
+        private async Task<string> GetAuthenticationToken(string redirectDomain, bool? silent)
         {
             string ticket = string.Empty;
 
@@ -159,7 +174,8 @@
             var ticketRequests = new List<OnlineIdServiceTicketRequest>();
             ticketRequests.Add(new OnlineIdServiceTicketRequest(redirectUri.DnsSafeHost, "JWT"));
 
-            var promptType = silent ? CredentialPromptType.DoNotPrompt : CredentialPromptType.PromptIfNeeded;
+            var promptType = GetCredentialPromptType(silent);
+
             UserIdentity identity = await this.authenticator.AuthenticateUserAsync(ticketRequests, promptType);
             if (identity.Tickets != null && identity.Tickets.Count > 0)
             {
